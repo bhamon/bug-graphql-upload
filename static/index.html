@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <script>
+      const gql = String.raw;
+
+      async function test() {
+        try {
+          const domSelector = document.querySelector("#selector");
+          if (!domSelector.files.length) {
+            console.error("please select a file");
+            return;
+          }
+
+          const form = new FormData();
+
+          form.append(
+            "operations",
+            JSON.stringify({
+              query: gql`
+                mutation dummy($file: Upload!) {
+                  foo(file: $file)
+                }
+              `,
+              variables: { file: null },
+            })
+          );
+
+          form.append(
+            "map",
+            JSON.stringify({ file: ["variables.file"] })
+          );
+
+          form.append("file", domSelector.files[0]);
+
+          const res1 = await fetch("/graphql", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+            },
+            body: form,
+          });
+
+          const json1 = await res1.json();
+          console.info(json1);
+
+          const res2 = await fetch("/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              query: gql`
+                query dummy {
+                  dummy
+                }
+              `,
+            }),
+          });
+
+          const json2 = await res2.json();
+          console.info(json2);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    </script>
+    <input id="selector" type="file" />
+    <button onclick="test()">test</button>
+  </body>
+</html>
